@@ -1,95 +1,140 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+import Footer from "@/components/Layouts/Guest/Footer";
+import GuestNavbar from "@/components/Layouts/Guest/GuestNavbar";
+import { useFetchImages } from "@/features/files/useFetchImages";
+import { useActiveProducts } from "@/features/products/useActiveProducts";
+import { useLatestProducts } from "@/features/products/useLatestProducts";
+import { rupiahFormat } from "@/lib/helpers";
+import { DashboardTableResults } from "@/models/Dashboard";
+import { DatatableColumn } from "@/models/Datatable";
+import { GlobalResponse } from "@/types/response";
+import { Carousel } from "flowbite-react";
+import React from "react";
+
+const images = [
+    'https://unsplash.com/photos/xWOTojs1eg4',
+    'https://unsplash.com/photos/wQLAGv4_OYs',
+    'https://unsplash.com/photos/XX0vmOvQ3GA',
+];
+
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    const [activeProducts, setActiveProducts] = React.useState<DashboardTableResults>([]);
+    const [latestProducts, setLatestProducts] = React.useState<DashboardTableResults>([]);
+    const [images, setImages] = React.useState<string[]>([]);
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+    const { mutate : imagesMutate } = useFetchImages({
+        onSuccess : (res : GlobalResponse<string[]>) => {
+            if (res.code == 200) {
+                setImages(res.data)
+            }
+        }
+    });
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
+    const { mutate : productActiveMutate } = useActiveProducts({
+        onSuccess : (res : GlobalResponse<DashboardTableResults>) => {
+            if (res.code == 200) {
+                setActiveProducts(res.data)
+            }
+        }
+    });
+    const { mutate : productLatestMutate } = useLatestProducts({
+        onSuccess : (res : GlobalResponse<DashboardTableResults>) => {
+            if (res.code == 200) {
+                setLatestProducts(res.data)
+            }
+        }
+    });
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    React.useEffect(() => {
+        imagesMutate({});
+        productLatestMutate({});
+        productActiveMutate({});
+
+    }, [])
+
+    return (
+        <>
+            <GuestNavbar/>
+            <section className="p-10 mt-14">
+                <div className="h-56 sm:h-64 xl:h-80 2xl:h-96">
+                    <Carousel>
+                        {
+                            images.map((image, key) => (
+                                <img className="w-full" key={key} alt="..." src={image} />
+                            ))
+                        }
+                    </Carousel>
+                </div>
+            </section>
+
+            {/* tersedia */}
+            <section className="p-10">
+                <div className="text-2xl mb-3 font-semibold">Product Terbaru</div>
+                <div className="h-56 sm:h-64 xl:h-80 2xl:h-96">
+                    <Carousel>
+                        {
+                            latestProducts.map((product, key) => (
+                                <div key={key} className="w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 hover:bg-black/10 transition-all duration-100">
+                                    <a href="#">
+                                        <img className="rounded-md w-full" src={product.file.fileurl} alt="product image" />
+                                    </a>
+                                    <div className="px-5 py-5">
+                                        <a href="#">
+                                            <div className="text-sm tracking-tight text-gray-900 dark:text-white">
+                                            {product.name}
+                                            </div>
+                                        </a>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-lg font-semibold text-blue-500 dark:text-white"> {rupiahFormat(product.price)} </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            ))
+                        }
+                    </Carousel>
+                    </div>
+                <div className="grid grid-cols-5 gap-6 justify-items-center">
+                    
+                </div>
+            </section>
+
+            {/* tersedia */}
+            <section className="p-10">
+                <div className="text-2xl mb-3 font-semibold">Product Tersedia</div>
+                <div className="grid grid-cols-5 gap-6 justify-items-center">
+                    {
+                        activeProducts.map((product, key) => (
+                            <div key={key} className="relative bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 hover:bg-black/10 transition-all duration-100">
+                                <a href="#">
+                                    <img className="rounded-md" src={product.file.fileurl} alt="product image" />
+                                </a>
+                                <div className="px-5 py-5">
+                                    <a href="#">
+                                        <div className="text-sm tracking-tight text-gray-900 dark:text-white">
+                                        {product.name}
+                                        </div>
+                                    </a>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-lg font-semibold text-blue-500 dark:text-white"> {rupiahFormat(product.price)} </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        ))
+                    }
+                </div>
+
+                <div className="flex justify-center items-center py-10">
+                    <button type="button" className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Lihat Lebih Banyak</button>
+                </div>
+            </section>
+
+            <Footer/>
+        </>
+
+    )
 }
